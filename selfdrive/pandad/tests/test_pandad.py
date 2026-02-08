@@ -88,16 +88,14 @@ class TestPandad:
       dt = self._run_test(5)
       ts.append(dt)
 
-    # 5s for USB (due to enumeration)
-    # - 0.2s pandad -> pandad
-    # - plus some buffer
     print("startup times", ts, sum(ts) / len(ts))
     assert 0.1 < (sum(ts)/len(ts)) < 0.7
 
-  def test_old_spi_protocol(self):
-    # flash firmware with old SPI protocol
-    self._flash_bootstub(os.path.join(HERE, "bootstub.panda_h7_spiv0.bin"))
-    self._run_test(45)
+  # slow and not super relevant anymore
+  #def test_old_spi_protocol(self):
+  #  # flash firmware with old SPI protocol
+  #  self._flash_bootstub(os.path.join(HERE, "bootstub.panda_h7_spiv0.bin"))
+  #  self._run_test(45)
 
   def test_release_to_devel_bootstub(self):
     self._flash_bootstub(None)

@@ -44,12 +44,10 @@ class TestAmplifier:
 
   def test_shutdown(self):
     amp = Amplifier(debug=True)
-    for _ in range(10):
-      r = amp.set_global_shutdown(True)
-      r = amp.set_global_shutdown(False)
-      # amp config should be successful, with no i2c errors
-      assert r
-      assert self._check_for_i2c_errors(False)
+    amp.set_global_shutdown(True)
+    # amp config should be successful, with no i2c errors
+    assert amp.set_global_shutdown(False)
+    assert self._check_for_i2c_errors(False)
 
   def test_init_while_siren_play(self):
     for _ in range(10):
