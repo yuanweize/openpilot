@@ -43,7 +43,7 @@ while IFS= read -r -d '' lib; do
   tmpdir=$(mktemp -d)
   lib=$(realpath "$lib")
   if (cd "$tmpdir" && ar x "$lib" 2>/dev/null); then
-    (cd "$tmpdir" && rm "$lib" && ar Drcs "$lib" *)
+    (cd "$tmpdir" && ar Drcs repacked.a * && mv repacked.a "$lib")
   fi
   rm -rf "$tmpdir"
 done < <(find "$DIR" -name '*.a' \
