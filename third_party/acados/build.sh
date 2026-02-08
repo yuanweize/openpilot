@@ -32,7 +32,7 @@ git submodule update --depth=1 --recursive --init
 # build
 mkdir -p build
 cd build
-cmake $ACADOS_FLAGS ..
+cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 $ACADOS_FLAGS ..
 make -j20 install
 
 INSTALL_DIR="$DIR/$ARCHNAME"

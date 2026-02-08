@@ -1,6 +1,7 @@
 name: vendor third_party
 
 on:
+  push:
   workflow_dispatch:
 
 jobs:

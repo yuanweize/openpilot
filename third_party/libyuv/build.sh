@@ -24,7 +24,7 @@ cd libyuv
 git checkout 4a14cb2e81235ecd656e799aecaaf139db8ce4a2
 
 # build
-cmake .
+cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .
 make -j$(nproc)
 
 INSTALL_DIR="$DIR/$ARCHNAME"
