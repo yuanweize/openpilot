@@ -52,7 +52,7 @@ mkdir -p $DIR/include/capnp $DIR/include/kj
 
 CAPNP_HEADERS="any.h blob.h capability.h common.h c++.capnp dynamic.h endian.h
   generated-header-support.h layout.h list.h message.h orphan.h pointer-helpers.h
-  raw-schema.h schema.h serialize.h"
+  raw-schema.h schema.h schema.capnp.h serialize.h"
 
 KJ_HEADERS="array.h async.h async-inl.h async-prelude.h common.h debug.h exception.h
   hash.h io.h list.h memory.h mutex.h one-of.h refcount.h source-location.h string.h
