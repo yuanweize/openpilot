@@ -26,9 +26,10 @@ git checkout $CAPNP_VERSION
 mkdir -p build
 cd build
 
-CMAKE_FLAGS="-DCMAKE_BUILD_TYPE=Release \
+CMAKE_FLAGS="-DCMAKE_BUILD_TYPE=MinSizeRel \
   -DBUILD_TESTING=OFF \
-  -DWITH_OPENSSL=OFF"
+  -DWITH_OPENSSL=OFF \
+  -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
   CMAKE_FLAGS="$CMAKE_FLAGS -DCMAKE_OSX_ARCHITECTURES=arm64;x86_64"
@@ -64,9 +65,12 @@ for h in $KJ_HEADERS; do cp $SRC/kj/$h $DIR/include/kj/; done
 cp $DIR/capnproto/build/c++/src/capnp/libcapnp.a $INSTALL_DIR/lib/
 cp $DIR/capnproto/build/c++/src/kj/libkj.a $INSTALL_DIR/lib/
 
-# compiler libraries and tools (needed to compile .capnp schemas)
-cp $DIR/capnproto/build/c++/src/capnp/libcapnpc.a $INSTALL_DIR/lib/
-cp $DIR/capnproto/build/c++/src/capnp/libcapnp-json.a $INSTALL_DIR/lib/
+# remove unused object files from static libs
+ar d $INSTALL_DIR/lib/libkj.a \
+  filesystem.c++.o filesystem-disk-unix.c++.o filesystem-disk-win32.c++.o \
+  main.c++.o test-helpers.c++.o
+
+# compiler tools (needed to compile .capnp schemas)
 cp $DIR/capnproto/build/c++/src/capnp/capnpc-c++ $INSTALL_DIR/bin/
 cp $DIR/capnproto/build/c++/src/capnp/capnp $INSTALL_DIR/bin/
 # capnpc is a symlink to capnp
@@ -77,7 +81,7 @@ strip $INSTALL_DIR/bin/capnp $INSTALL_DIR/bin/capnpc-c++
 
 ## To create universal binary on Darwin:
 ## ```
-## for f in libcapnp.a libkj.a libcapnpc.a libcapnp-json.a; do
+## for f in libcapnp.a libkj.a; do
 ##   lipo -create -output Darwin/lib/$f path-to-x64/lib/$f path-to-arm64/lib/$f
 ## done
 ## for f in capnp capnpc-c++; do
