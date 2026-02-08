@@ -33,13 +33,16 @@ jobs:
       contents: write
     steps:
     - uses: actions/checkout@v6
-      with:
-        lfs: true
     - uses: actions/download-artifact@v4
       with:
         path: /tmp/artifacts
     - name: Commit vendored libraries
+      env:
+        GH_LFS_URL: https://github.com/${{ github.repository }}.git/info/lfs
       run: |
+        # Override LFS endpoints to use GitHub (default .lfsconfig points to GitLab SSH)
+        git config lfs.url "$GH_LFS_URL"
+        git config lfs.pushurl "$GH_LFS_URL"
         for f in /tmp/artifacts/*/third_party_build.tar; do
           tar xf "$f"
         done
