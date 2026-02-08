@@ -4,3 +4,6 @@ acados_repo/
 !larch64/
 !aarch64/
 !Darwin/
+!*.so
+!*.so.*
+!*.dylib
