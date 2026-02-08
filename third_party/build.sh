@@ -49,3 +49,5 @@ while IFS= read -r -d '' lib; do
 done < <(find "$DIR" -name '*.a' \
   \( -path '*/x86_64/*' -o -path '*/Darwin/*' -o -path '*/larch64/*' -o -path '*/aarch64/*' \) \
   -print0)
+
+echo -e "\033[32mAll third_party builds succeeded.\033[0m"
