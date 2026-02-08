@@ -1,1 +1,7 @@
 *.pyc
+
+# un-ignore vendored build artifacts (overrides root .gitignore)
+!*.a
+!*.so
+!*.so.*
+!*.dylib
