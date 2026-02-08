@@ -51,41 +51,66 @@ SRC="$TMPDIR/$(ls "$TMPDIR")"
 GCC_VERSION="13.2.1"
 MULTILIB="thumb/v7e-m+dp/hard"
 
-# We use system clang as the compiler (it has a built-in ARM backend and
-# integrated assembler), so we only need binutils (ld, objcopy, objdump)
-# and libgcc.a from the ARM toolchain. A wrapper script at
-# bin/arm-none-eabi-gcc translates gcc flags to clang equivalents.
-
-# bin/ - objcopy and objdump from the toolchain
+# bin/ - compiler driver + tools that panda/SConscript uses
 mkdir -p "$INSTALL_DIR/bin"
-for tool in objcopy objdump; do
+for tool in gcc objcopy objdump; do
   cp "$SRC/bin/arm-none-eabi-$tool" "$INSTALL_DIR/bin/"
 done
 
-# arm-none-eabi/bin/ld - linker (invoked by clang via -fuse-ld=)
-mkdir -p "$INSTALL_DIR/arm-none-eabi/bin"
-cp "$SRC/arm-none-eabi/bin/ld" "$INSTALL_DIR/arm-none-eabi/bin/"
+# libexec/gcc/ - compiler backends (cc1, collect2)
+mkdir -p "$INSTALL_DIR/libexec/gcc/arm-none-eabi/$GCC_VERSION"
+for backend in cc1 collect2; do
+  cp "$SRC/libexec/gcc/arm-none-eabi/$GCC_VERSION/$backend" \
+     "$INSTALL_DIR/libexec/gcc/arm-none-eabi/$GCC_VERSION/"
+done
 
-# libgcc.a - ARM runtime intrinsics (__aeabi_* functions) for our multilib
+# lib/gcc/ - only the compiler headers panda actually uses + libgcc.a
+# Panda includes only <stdint.h> and <stdbool.h>.
+# gcc's stdint.h chains to newlib via #include_next, so we need those few newlib headers too.
+GCC_INC="$INSTALL_DIR/lib/gcc/arm-none-eabi/$GCC_VERSION/include"
+mkdir -p "$GCC_INC"
+for hdr in stdint.h stdint-gcc.h stdbool.h stddef.h stdarg.h limits.h syslimits.h float.h; do
+  cp "$SRC/lib/gcc/arm-none-eabi/$GCC_VERSION/include/$hdr" "$GCC_INC/" 2>/dev/null || true
+done
+
 mkdir -p "$INSTALL_DIR/lib/gcc/arm-none-eabi/$GCC_VERSION/$MULTILIB"
 cp "$SRC/lib/gcc/arm-none-eabi/$GCC_VERSION/$MULTILIB/libgcc.a" \
    "$INSTALL_DIR/lib/gcc/arm-none-eabi/$GCC_VERSION/$MULTILIB/"
 
-# Build libaeabi_compat.a - AEABI memory helpers that clang emits but
-# aren't in libgcc.a (they're normally in newlib's libc which we don't ship)
-COMPAT_DIR="$INSTALL_DIR/lib/gcc/arm-none-eabi/$GCC_VERSION/$MULTILIB"
-clang --target=arm-none-eabi -mcpu=cortex-m7 -mthumb -mhard-float -mfpu=fpv5-d16 \
-  -Os -c "$DIR/aeabi_compat.c" -o "$COMPAT_DIR/aeabi_compat.o"
-llvm-ar rcs "$COMPAT_DIR/libaeabi_compat.a" "$COMPAT_DIR/aeabi_compat.o"
-rm "$COMPAT_DIR/aeabi_compat.o"
+# arm-none-eabi/bin/ - assembler/linker that gcc invokes internally
+mkdir -p "$INSTALL_DIR/arm-none-eabi/bin"
+for tool in as ld; do
+  cp "$SRC/arm-none-eabi/bin/$tool" "$INSTALL_DIR/arm-none-eabi/bin/"
+done
 
-# Install the arm-none-eabi-gcc wrapper script
-cp "$DIR/arm-none-eabi-gcc-wrapper.sh" "$INSTALL_DIR/bin/arm-none-eabi-gcc"
-chmod +x "$INSTALL_DIR/bin/arm-none-eabi-gcc"
+# Minimal newlib headers needed by gcc's stdint.h (#include_next chain)
+NEWLIB_INC="$INSTALL_DIR/arm-none-eabi/include"
+mkdir -p "$NEWLIB_INC/machine" "$NEWLIB_INC/sys"
+for hdr in stdint.h _newlib_version.h; do
+  cp "$SRC/arm-none-eabi/include/$hdr" "$NEWLIB_INC/"
+done
+cp "$SRC/arm-none-eabi/include/machine/_default_types.h" "$NEWLIB_INC/machine/"
+for hdr in features.h _intsup.h _stdint.h; do
+  cp "$SRC/arm-none-eabi/include/sys/$hdr" "$NEWLIB_INC/sys/"
+done
 
 # Strip debug symbols from host binaries
-find "$INSTALL_DIR" -type f -executable -not -name "*.sh" -not -name "arm-none-eabi-gcc" \
-  -exec strip --strip-unneeded {} + 2>/dev/null || true
+find "$INSTALL_DIR" -type f -executable -exec strip --strip-unneeded {} + 2>/dev/null || true
+
+# UPX-compress ELF binaries (self-extracting, ~50ms decompression overhead)
+if command -v upx &>/dev/null; then
+  UPX=upx
+elif [ -f /tmp/upx-4.2.4-amd64_linux/upx ]; then
+  UPX=/tmp/upx-4.2.4-amd64_linux/upx
+else
+  # Download UPX for compression
+  UPX_DIR=$(mktemp -d)
+  curl -sL https://github.com/upx/upx/releases/download/v4.2.4/upx-4.2.4-amd64_linux.tar.xz \
+    | tar xJ -C "$UPX_DIR" --strip-components=1
+  UPX="$UPX_DIR/upx"
+fi
+
+find "$INSTALL_DIR" -type f -executable -exec "$UPX" --best {} + 2>/dev/null || true
 
 # Cleanup
 rm -rf "$TMPDIR"
