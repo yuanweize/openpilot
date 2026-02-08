@@ -45,7 +45,6 @@ brew "llvm"
 brew "openssl@3.0"
 brew "qt@5"
 brew "zeromq"
-cask "gcc-arm-embedded"
 brew "portaudio"
 brew "gcc@13"
 EOS

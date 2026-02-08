@@ -192,6 +192,9 @@ messaging = [socketmaster, msgq, 'capnp', 'kj',]
 Export('messaging')
 
 
+# Prepend vendored gcc-arm-none-eabi to PATH for panda cross-compilation
+os.environ['PATH'] = os.path.join(Dir('#').abspath, f'third_party/gcc-arm-none-eabi/{arch}/bin') + ':' + os.environ['PATH']
+
 # Build other submodules
 SConscript(['panda/SConscript'])
 
