@@ -25,7 +25,7 @@ git checkout 4a14cb2e81235ecd656e799aecaaf139db8ce4a2
 
 # build
 cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 .
-make -j$(nproc)
+make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu)
 
 INSTALL_DIR="$DIR/$ARCHNAME"
 rm -rf $INSTALL_DIR

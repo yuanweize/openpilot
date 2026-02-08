@@ -58,7 +58,7 @@ git clean -xdff .
 
 cd src
 
-make -j$(nproc) PLATFORM=$RAYLIB_PLATFORM RAYLIB_RELEASE_PATH=$INSTALL_DIR
+make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu) PLATFORM=$RAYLIB_PLATFORM RAYLIB_RELEASE_PATH=$INSTALL_DIR
 cp raylib.h raymath.h rlgl.h $INSTALL_H_DIR/
 echo "raylib development files installed/updated in $INSTALL_H_DIR"
 
