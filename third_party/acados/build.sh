@@ -56,6 +56,7 @@ fi
 # build tera
 cd $DIR/acados_repo/interfaces/acados_template/tera_renderer/
 if [[ "$OSTYPE" == "darwin"* ]]; then
+  rustup target add aarch64-apple-darwin x86_64-apple-darwin
   cargo build --verbose --release --target aarch64-apple-darwin
   cargo build --verbose --release --target x86_64-apple-darwin
   lipo -create -output target/release/t_renderer target/x86_64-apple-darwin/release/t_renderer target/aarch64-apple-darwin/release/t_renderer
